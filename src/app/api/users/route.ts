@@ -1,13 +1,40 @@
 import { NextResponse } from "next/server";
-import { findOne, insertOne } from "@/lib/mongo";
-import { hashPassword } from "@/lib/crypto";
+
+/**
+ * 用户注册 API 路由
+ * 支持两种模式:
+ *   1. SCF 代理模式 (生产) — 环境变量 SCF_API_BASE 存在时启用
+ *   2. Data API 直连模式 (本地开发) — 无 SCF_API_BASE 时使用
+ */
 
 export async function POST(request: Request) {
-  try {
-    const { username, id_card, user_type, phone, password } =
-      await request.json();
+  const { username, id_card, user_type, phone, password } =
+    await request.json();
 
-    // 检查是否已存在
+  // 模式 1: SCF 代理
+  const scfBase = process.env.SCF_API_BASE;
+  if (scfBase) {
+    try {
+      const res = await fetch(`${scfBase}/api/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, id_card, user_type, phone, password }),
+      });
+      const data = await res.json();
+      return NextResponse.json(data, { status: res.status });
+    } catch {
+      return NextResponse.json(
+        { message: "服务器错误，请稍后重试" },
+        { status: 500 },
+      );
+    }
+  }
+
+  // 模式 2: Data API 直连
+  try {
+    const { findOne, insertOne } = await import("@/lib/mongo");
+    const { hashPassword } = await import("@/lib/crypto");
+
     const existingPhone = await findOne("users", { phone });
     if (existingPhone) {
       return NextResponse.json(
@@ -25,7 +52,6 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await hashPassword(password);
-
     await insertOne("users", {
       username,
       id_card,

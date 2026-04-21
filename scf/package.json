@@ -1,0 +1,10 @@
+{
+  "name": "museum-scf-proxy",
+  "version": "1.0.0",
+  "description": "Museum volunteer system - SCF database proxy for Tencent Cloud",
+  "main": "index.js",
+  "dependencies": {
+    "mongoose": "^8",
+    "bcryptjs": "^2"
+  }
+}
