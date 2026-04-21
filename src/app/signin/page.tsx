@@ -1,6 +1,5 @@
 "use client";
 
-import { Check } from "@gravity-ui/icons";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -17,37 +16,43 @@ import {
 } from "@heroui/react";
 
 import { getFormData } from "@/components/utils";
-import { signIn } from "next-auth/react";
 
 export default function Signin() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
+   e.preventDefault();
+   setIsLoading(true);
 
-    const user = getFormData(e);
+   const user = getFormData(e);
 
-    try {
-      const res = await signIn("credentials", {
-        phone: user.phone,
-        password: user.password,
-        redirect: false,
-      });
+   try {
+     const res = await fetch("/api/auth/login", {
+       method: "POST",
+       headers: { "Content-Type": "application/json" },
+       body: JSON.stringify({
+         phone: user.phone,
+         password: user.password,
+       }),
+     });
 
-      if (res?.ok) {
-        router.push("/dashboard");
-      } else {
-        alert("登录失败，请检查您的电话号码和密码是否正确。");
-      }
-    } catch (error) {
-      console.error("登录出错:", error);
-      alert("登录失败，请稍后重试。");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+     const data = await res.json();
+
+     if (res.ok && data.token) {
+       // 写入 next-auth 同名 cookie，SigninLayout 就能识别
+       document.cookie = `auth-token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+       router.push("/dashboard");
+     } else {
+       alert(data.message || "登录失败，请检查您的电话号码和密码是否正确。");
+     }
+   } catch (error) {
+     console.error("登录出错:", error);
+     alert("登录失败，请稍后重试。");
+   } finally {
+     setIsLoading(false);
+   }
+ };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-primary-50 via-background to-primary-50/30">
@@ -72,9 +77,7 @@ export default function Signin() {
               <h1 className="text-2xl font-bold bg-linear-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
                 欢迎登录
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                博物馆志愿者服务系统
-              </p>
+              <p className="text-sm text-gray-500 mt-1">博物馆志愿者服务系统</p>
             </div>
 
             {/* 表单字段 */}
@@ -100,10 +103,7 @@ export default function Signin() {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">
                     📱
                   </span>
-                  <Input 
-                    placeholder="请输入您的电话号码"
-                    className="pl-9"
-                  />
+                  <Input placeholder="请输入您的电话号码" className="pl-9" />
                 </div>
                 <FieldError />
               </TextField>
@@ -125,10 +125,7 @@ export default function Signin() {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">
                     🔒
                   </span>
-                  <Input 
-                    placeholder="输入您的密码"
-                    className="pl-9"
-                  />
+                  <Input placeholder="输入您的密码" className="pl-9" />
                 </div>
                 <Description className="text-xs mt-1">
                   至少需要6个字符，建议包含字母和数字以增强安全性。
@@ -153,10 +150,7 @@ export default function Signin() {
                     登录中...
                   </div>
                 ) : (
-                  <>
-                    <Check />
-                    登录
-                  </>
+                  <>登录</>
                 )}
               </Button>
             </div>

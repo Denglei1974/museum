@@ -1,13 +1,13 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/options";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function SigninLayout(props: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth-token")?.value;
 
-  if (session) {
+  if (token) {
     redirect("/dashboard");
   }
   return <>{props.children}</>;

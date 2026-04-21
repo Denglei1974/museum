@@ -1,6 +1,5 @@
 "use client";
 
-import { Check } from "@gravity-ui/icons";
 import { userTypeOptions } from "./userType";
 import {
   Button,
@@ -136,7 +135,7 @@ export default  function AddUser() {
 
       <div className="flex gap-2">
         <Button type="submit">
-          <Check />
+          ✅
           添加用户
         </Button>
         <Button type="reset" variant="secondary">

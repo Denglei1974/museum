@@ -1,6 +1,6 @@
 import dbConnect from "@/lib/db";
 import User from "@/lib/models/user";
-import { hashPassword } from "@/components/utils";
+import { hashPassword } from "@/lib/crypto";
 
 export async function POST(request: Request) {
   try {
