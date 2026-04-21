@@ -10,7 +10,7 @@ const PUBLIC_PATHS = [
   "/images/signin.png",
 ];
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 公开路径直接放行
