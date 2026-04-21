@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import User from "@/lib/models/user";
+import { findOne } from "@/lib/mongo";
 import { comparePassword } from "@/lib/crypto";
 
 export async function POST(request: NextRequest) {
@@ -14,8 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dbConnect();
-    const user = await User.findOne({ phone });
+    const user = await findOne("users", { phone });
     if (!user) {
       return NextResponse.json(
         { message: "电话号码或密码错误" },
@@ -33,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     // 生成简单 token: base64 编码的用户信息
     const payload = {
-      id: user._id.toString(),
+      id: (user as any)._id,
       phone: user.phone,
       username: user.username,
       user_type: user.user_type,

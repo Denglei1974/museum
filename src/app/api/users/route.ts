@@ -1,38 +1,47 @@
-import dbConnect from "@/lib/db";
-import User from "@/lib/models/user";
+import { NextResponse } from "next/server";
+import { findOne, insertOne } from "@/lib/mongo";
 import { hashPassword } from "@/lib/crypto";
 
 export async function POST(request: Request) {
   try {
     const { username, id_card, user_type, phone, password } =
       await request.json();
-    await dbConnect();
 
-    const existingUser =
-      (await User.findOne({ phone })) || (await User.findOne({ id_card }));
-    if (existingUser) {
-      return new Response(JSON.stringify({ message: "User already exists" }), {
-        status: 400,
-      });
+    // 检查是否已存在
+    const existingPhone = await findOne("users", { phone });
+    if (existingPhone) {
+      return NextResponse.json(
+        { message: "该电话号码已被注册" },
+        { status: 400 },
+      );
+    }
+
+    const existingIdCard = await findOne("users", { id_card });
+    if (existingIdCard) {
+      return NextResponse.json(
+        { message: "该身份证号已被注册" },
+        { status: 400 },
+      );
     }
 
     const hashedPassword = await hashPassword(password);
-    const user = new User({
-      username: username,
-      id_card: id_card,
-      user_type: user_type,
-      phone: phone,
+
+    await insertOne("users", {
+      username,
+      id_card,
+      user_type,
+      phone,
       password: hashedPassword,
     });
-    await user.save();
 
-    return new Response(
-      JSON.stringify({ message: "User created successfully" }),
+    return NextResponse.json(
+      { message: "用户创建成功" },
       { status: 201 },
     );
   } catch {
-    return new Response(JSON.stringify({ message: "Error creating user" }), {
-      status: 500,
-    });
+    return NextResponse.json(
+      { message: "创建用户失败，请稍后重试" },
+      { status: 500 },
+    );
   }
 }
