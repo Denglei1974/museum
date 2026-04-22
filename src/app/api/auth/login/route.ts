@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 /**
  * 登录 API 路由
  * 支持两种模式:
- *   1. SCF 代理模式 (生产) — 环境变量 SCF_API_BASE 存在时启用
- *   2. Data API 直连模式 (本地开发) — 无 SCF_API_BASE 时使用
+ *   1. SCF 代理模式 (生产) — 环境变量 MUSEUM_API_URL 存在时启用
+ *   2. Data API 直连模式 (本地开发) — 无 MUSEUM_API_URL 时使用
  */
 
 export async function POST(request: NextRequest) {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 模式 1: SCF 代理（腾讯云部署）
-  const scfBase = process.env.SCF_API_BASE;
+  const scfBase = process.env.MUSEUM_API_URL;
   if (scfBase) {
     try {
       const res = await fetch(`${scfBase}/api/auth/login`, {

@@ -57,7 +57,7 @@ https://service-xxxxxx.gz.apigw.tencentcs.com/release
 在 Edge Pages 的环境变量中添加：
 
 ```
-SCF_API_BASE=https://service-xxxxxx.gz.apigw.tencentcs.com/release
+MUSEUM_API_URL=https://12345678-xxxx.ap-beijing.tencentscf.com
 ```
 
 ## 三、验证
