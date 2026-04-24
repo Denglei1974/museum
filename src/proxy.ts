@@ -4,20 +4,21 @@ import { NextRequest, NextResponse } from "next/server";
 const PUBLIC_PATHS = [
   "/signin",
   "/api/auth/login",
-  "/api/auth/register",
-  "/volunteerSignup", // 公开报名页面
-  "/favicon.ico",
-  "/images/signin.png",
+  "/api/auth/logout",
+  "/api/auth/change-password",
 ];
 
-export default function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 公开路径直接放行
   if (
-    PUBLIC_PATHS.includes(pathname) ||
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
+    pathname.startsWith("/_next/") ||
     pathname.startsWith("/images/") ||
-    pathname.startsWith("/_next/")
+    pathname.startsWith("/icons/") ||
+    pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/manifest.json")
   ) {
     return NextResponse.next();
   }
@@ -26,19 +27,26 @@ export default function proxy(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value;
 
   if (!token) {
-    // 未登录 → 跳转登录页
+    const signinUrl = new URL("/signin", request.url);
+    signinUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(signinUrl);
+  }
+
+  // 验证 token 是否过期
+  try {
+    const data = JSON.parse(atob(token));
+    if (Date.now() > data.exp) {
+      const signinUrl = new URL("/signin", request.url);
+      return NextResponse.redirect(signinUrl);
+    }
+  } catch {
     const signinUrl = new URL("/signin", request.url);
     return NextResponse.redirect(signinUrl);
   }
 
-  // 已登录 → 放行
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/addUser/:path*",
-    "/api/users/:path*",
-  ],
+  matcher: ["/((?!api/.*).*)", "/api/:path*"],
 };

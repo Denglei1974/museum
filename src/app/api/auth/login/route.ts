@@ -1,11 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+export const runtime = "nodejs";
 
-/**
- * 登录 API 路由
- * 支持两种模式:
- *   1. SCF 代理模式 (生产) — 环境变量 MUSEUM_API_URL 存在时启用
- *   2. Data API 直连模式 (本地开发) — 无 MUSEUM_API_URL 时使用
- */
+import { NextRequest, NextResponse } from "next/server";
+import { generateToken } from "@/lib/auth/token";
 
 export async function POST(request: NextRequest) {
   const { phone, password } = await request.json();
@@ -17,51 +13,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 模式 1: SCF 代理（腾讯云部署）
-  const scfBase = process.env.MUSEUM_API_URL;
-  if (scfBase) {
-    try {
-      const res = await fetch(`${scfBase}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, password }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || !data.token) {
-        return NextResponse.json(
-          { message: data.message || "登录失败" },
-          { status: res.status || 401 },
-        );
-      }
-
-      const response = NextResponse.json({
-        message: data.message,
-        user: data.user,
-      });
-
-      response.cookies.set("auth-token", data.token, {
-        httpOnly: true,
-        path: "/",
-        maxAge: 60 * 60 * 24,
-        sameSite: "lax",
-      });
-
-      return response;
-    } catch {
-      return NextResponse.json(
-        { message: "服务器错误，请稍后重试" },
-        { status: 500 },
-      );
-    }
-  }
-
-  // 模式 2: Data API 直连（本地开发）
   try {
-    const { findOne } = await import("@/lib/mongo");
+    const { Users } = await import("@/lib/mongo-ops");
     const { comparePassword } = await import("@/lib/crypto");
 
-    const user = await findOne("users", { phone });
+    const user = await Users.findByPhone(phone);
     if (!user) {
       return NextResponse.json(
         { message: "电话号码或密码错误" },
@@ -69,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ok = await comparePassword(password, user.password);
+    const ok = await comparePassword(password, (user as any).password);
     if (!ok) {
       return NextResponse.json(
         { message: "电话号码或密码错误" },
@@ -77,21 +33,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const payload = {
-      id: (user as any)._id,
-      phone: user.phone,
-      username: user.username,
-      user_type: user.user_type,
-      ts: Date.now(),
-    };
-    const token = btoa(JSON.stringify(payload));
+    const userObj = user as Record<string, unknown>;
+    const role = (userObj.role as string) || "social_volunteer";
+    const mustChangePassword = !!userObj.mustChangePassword;
+
+    const token = generateToken({
+      id: String(userObj._id || ""),
+      phone: userObj.phone as string,
+      role,
+      username: (userObj.username as string) || "",
+      mustChangePassword,
+    });
 
     const response = NextResponse.json({
       message: "登录成功",
       user: {
-        username: user.username,
-        user_type: user.user_type,
-        phone: user.phone,
+        username: userObj.username,
+        role,
+        phone: userObj.phone,
+        mustChangePassword,
       },
     });
 
@@ -103,7 +63,8 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch {
+  } catch (err) {
+    console.error("Login error:", err);
     return NextResponse.json(
       { message: "服务器错误，请稍后重试" },
       { status: 500 },
