@@ -1,0 +1,39 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // 公开路径 + 静态资源直接放行
+  if (
+    pathname === "/signin" ||
+    pathname === "/api/auth/login" ||
+    pathname === "/api/auth/logout" ||
+    pathname === "/api/auth/change-password" ||
+    pathname === "/" ||
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/images/") ||
+    pathname.startsWith("/icons/") ||
+    pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/manifest.json")
+  ) {
+    return NextResponse.next();
+  }
+
+  // 检查 cookie
+  const token = request.cookies.get("auth-token")?.value;
+  if (!token) {
+    return NextResponse.redirect(new URL("/signin", request.url));
+  }
+
+  // 验证 token 是否过期
+  try {
+    const payload = JSON.parse(atob(token));
+    if (Date.now() > payload.exp) {
+      return NextResponse.redirect(new URL("/signin", request.url));
+    }
+  } catch {
+    return NextResponse.redirect(new URL("/signin", request.url));
+  }
+
+  return NextResponse.next();
+}
