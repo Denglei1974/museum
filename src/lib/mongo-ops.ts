@@ -1,68 +1,30 @@
 /**
  * MongoDB 原生驱动连接
  * 使用 mongodb+srv:// 连接，不用 Data API
- * 支持 serverless 环境（EdgeOne Pages / Vercel）
  */
 
 import { MongoClient, Db, ObjectId } from "mongodb";
 
 const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  throw new Error("请设置环境变量 MONGODB_URI");
+}
+
 const DB_NAME = process.env.MONGO_DB_NAME || "museum";
 
-// 在 serverless 环境中使用 globalThis 缓存连接
-// 这样在热重载和函数复用时能保持连接
-declare global {
-  // eslint-disable-next-line no-var
-  var _mongoClient: MongoClient | undefined;
-  // eslint-disable-next-line no-var
-  var _mongoDb: Db | undefined;
-}
-
-let clientPromise: Promise<MongoClient> | null = null;
-
-async function getClient(): Promise<MongoClient> {
-  // 优先使用 globalThis 缓存（serverless 热重载场景）
-  if (globalThis._mongoClient) {
-    return globalThis._mongoClient;
-  }
-
-  // 使用模块级 Promise 缓存（同请求复用）
-  if (clientPromise) {
-    return clientPromise;
-  }
-
-  if (!MONGODB_URI) {
-    throw new Error("请设置环境变量 MONGODB_URI");
-  }
-
-  clientPromise = MongoClient.connect(MONGODB_URI, {
-    serverSelectionTimeoutMS: 10000, // 10秒超时
-    connectTimeoutMS: 10000,
-    socketTimeoutMS: 20000,
-  maxPoolSize: 10,
-    minPoolSize: 1,
-  maxIdleTimeMS: 60000, // 闲置连接 1 分钟后关闭
-  }).then((client) => {
-    globalThis._mongoClient = client;
-    return client;
-  }).catch((err) => {
-    clientPromise = null; // 失败后重置，允许下次重试
-    throw err;
-  });
-
-  return clientPromise;
-}
+let cachedClient: MongoClient | null = null;
+let cachedDb: Db | null = null;
 
 export async function getDb(): Promise<Db> {
-  // 优先使用 globalThis 缓存
-  if (globalThis._mongoDb) {
-    return globalThis._mongoDb;
+  if (cachedClient && cachedDb) {
+    return cachedDb;
   }
 
-  const client = await getClient();
-  const db = client.db(DB_NAME);
-  globalThis._mongoDb = db;
-  return db;
+  const client = new MongoClient(MONGODB_URI!);
+  await client.connect();
+  cachedClient = client;
+  cachedDb = client.db(DB_NAME);
+  return cachedDb;
 }
 
 // 便捷集合访问
