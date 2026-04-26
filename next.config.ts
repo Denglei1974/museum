@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // 如果设置了 SCF_API_URL 且没有 MONGODB_URI，则代理 API 到 SCF
+  // 如果设置了 MUSEUM_API_URL，则代理 API 请求到 SCF 云函数
   async rewrites() {
-    const scfUrl = process.env.SCF_API_URL;
+    const scfUrl = process.env.MUSEUM_API_URL;
     if (scfUrl) {
       return [
         {

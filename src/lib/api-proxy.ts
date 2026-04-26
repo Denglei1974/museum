@@ -3,17 +3,17 @@
  * 用于 EdgeOne Pages 环境（不支持 mongodb 原生驱动）
  */
 
-const SCF_API_URL = process.env.SCF_API_URL || "";
+const API_URL = process.env.MUSEUM_API_URL || "";
 
-// 判断是否在 EdgeOne Pages 环境
-const isEdgeEnv = !process.env.MONGODB_URI || process.env.SCF_API_URL;
+// 判断是否在 EdgeOne Pages 环境（通过 SCF 代理）
+const isEdgeEnv = !process.env.MONGODB_URI || process.env.MUSEUM_API_URL;
 
-// SCF 请求封装
+// SCF 代理请求封装
 async function scfFetch(path: string, options: RequestInit = {}) {
-  if (!SCF_API_URL) {
-    throw new Error("请设置环境变量 SCF_API_URL");
+  if (!API_URL) {
+    throw new Error("请设置环境变量 MUSEUM_API_URL");
   }
-  const url = `${SCF_API_URL}${path}`;
+  const url = `${API_URL}${path}`;
   const response = await fetch(url, {
     ...options,
     headers: {
