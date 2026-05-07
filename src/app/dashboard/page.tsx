@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getThemeByRole, getRoleLabel, isVolunteer, isAdmin } from "@/lib/auth/roles";
-import DashboardClient from "./dashboard-client";
+import VolunteerHome from "./volunteer-home";
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
@@ -24,49 +24,24 @@ export default async function DashboardPage() {
   }
 
   const role = user.role || "social_volunteer";
+
+  // 管理员 → 跳转到管理后台
+  if (isAdmin(role)) {
+    redirect("/admin/volunteers");
+  }
+
+  // 志愿者 → 显示志愿者主页
   const theme = getThemeByRole(role);
   const roleLabel = getRoleLabel(role);
-  const isVol = isVolunteer(role);
-  const isAdm = isAdmin(role);
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: theme.bg }}
-    >
-      {/* Header */}
-      <header
-        className="text-white p-4 shadow-lg"
-        style={{ backgroundColor: theme.primary }}
-      >
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold">
-              🏛️ {isVol ? "志愿者服务" : "管理后台"}
-            </h1>
-            <p className="text-sm opacity-90">{user.username} · {roleLabel}</p>
-          </div>
-          <form action="/api/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="px-3 py-1.5 text-sm bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-            >
-              退出
-            </button>
-          </form>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-lg mx-auto p-4">
-        <DashboardClient
-          user={user}
-          role={role}
-          theme={theme}
-          isVolunteer={isVol}
-          isAdmin={isAdm}
-        />
-      </main>
+    <div className="min-h-screen" style={{ backgroundColor: theme.bg }}>
+      <VolunteerHome
+        user={user}
+        role={role}
+        roleLabel={roleLabel}
+        theme={theme}
+      />
     </div>
   );
 }

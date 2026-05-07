@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface RecruitClientProps {
-  user: { phone: string; role: string };
+  user: { phone: string; username: string; role: string };
   isVolunteer: boolean;
   theme: { primary: string; bg: string; accent: string };
 }
@@ -26,7 +27,6 @@ interface Recruitment {
 export default function RecruitClient({ user, isVolunteer, theme }: RecruitClientProps) {
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [signedUp, setSignedUp] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch("/api/recruitments?status=active")
@@ -37,25 +37,6 @@ export default function RecruitClient({ user, isVolunteer, theme }: RecruitClien
       })
       .catch(() => setLoading(false));
   }, []);
-
-  const handleSignup = async (id: string) => {
-    try {
-      const res = await fetch("/api/signups", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recruitmentId: id }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setSignedUp((prev) => new Set(prev).add(id));
-        alert(data.message);
-      } else {
-        alert(data.message);
-      }
-    } catch {
-      alert("网络错误");
-    }
-  };
 
   if (loading) {
     return (
@@ -76,7 +57,6 @@ export default function RecruitClient({ user, isVolunteer, theme }: RecruitClien
   return (
     <div className="space-y-4">
       {recruitments.map((item) => {
-        const isSignedUp = signedUp.has(String(item._id));
         const typeLabel = item.type === "daily" ? "日常服务" : "特殊活动";
 
         return (
@@ -101,7 +81,7 @@ export default function RecruitClient({ user, isVolunteer, theme }: RecruitClien
 
               <div className="space-y-1 text-sm text-gray-600 mb-4">
                 <p>📅 {item.startDate}{item.endDate !== item.startDate ? ` ~ ${item.endDate}` : ""}</p>
-                {item.startTime && <p>🕐 {item.startTime} - {item.endTime}</p>}
+                {item.startTime && <p> {item.startTime} - {item.endTime}</p>}
                 {item.location && <p>📍 {item.location}</p>}
                 {item.positions && item.positions.length > 0 && (
                   <p>🏷️ 岗位：{item.positions.join("、")}</p>
@@ -110,24 +90,13 @@ export default function RecruitClient({ user, isVolunteer, theme }: RecruitClien
               </div>
 
               {isVolunteer && (
-                <button
-                  onClick={() => handleSignup(String(item._id))}
-                  disabled={isSignedUp}
-                  className={`w-full h-11 rounded-xl text-base font-semibold transition-all ${
-                    isSignedUp
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "text-white active:scale-95"
-                  }`}
-                  style={
-                    isSignedUp
-                      ? {}
-                      : {
-                          backgroundColor: theme.primary,
-                        }
-                  }
+                <Link
+                  href={`/signup/${item._id}`}
+                  className="block w-full h-11 bg-gradient-to-r rounded-xl text-center leading-11 text-base font-semibold text-white active:scale-95 transition-all"
+                  style={{ backgroundColor: theme.primary }}
                 >
-                  {isSignedUp ? "已报名 ✓" : "立即报名"}
-                </button>
+                  立刻报名
+                </Link>
               )}
             </div>
           </div>

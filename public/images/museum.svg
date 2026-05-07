@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#87CEEB"/>
+      <stop offset="100%" stop-color="#E0F0FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#sky)"/>
+  <!-- Ground -->
+  <rect y="260" width="640" height="100" fill="#8B7355"/>
+  <!-- Building -->
+  <rect x="120" y="120" width="400" height="140" fill="#8B4513" rx="4"/>
+  <!-- Roof -->
+  <polygon points="100,120 320,40 540,120" fill="#8B0000"/>
+  <polygon points="110,120 320,50 530,120" fill="#A52A2A"/>
+  <!-- Columns -->
+  <rect x="180" y="120" width="16" height="140" fill="#D2B48C"/>
+  <rect x="260" y="120" width="16" height="140" fill="#D2B48C"/>
+  <rect x="360" y="120" width="16" height="140" fill="#D2B48C"/>
+  <rect x="440" y="120" width="16" height="140" fill="#D2B48C"/>
+  <!-- Door -->
+  <rect x="280" y="200" width="80" height="60" fill="#654321" rx="40" ry="40"/>
+  <!-- Windows -->
+  <rect x="140" y="160" width="30" height="40" fill="#87CEEB" rx="2"/>
+  <rect x="470" y="160" width="30" height="40" fill="#87CEEB" rx="2"/>
+  <!-- Steps -->
+  <rect x="100" y="260" width="440" height="12" fill="#A0A0A0"/>
+  <rect x="120" y="272" width="400" height="12" fill="#909090"/>
+  <!-- Text -->
+  <text x="320" y="310" text-anchor="middle" font-size="18" fill="white" font-family="sans-serif">张学良旧居陈列馆</text>
+</svg>

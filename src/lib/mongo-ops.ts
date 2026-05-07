@@ -1,25 +1,15 @@
 /**
- * MongoDB 原生驱动连接（仅本地开发使用）
+ * MongoDB 原生驱动连接
  * 使用 mongodb+srv:// 连接，不用 Data API
- *
- * ⚠️ EdgeOne Pages 环境会设置 MUSEUM_API_URL，此模块不会被加载。
- * 如果 MUSEUM_API_URL 已设置但此模块仍被引用，导出空实现避免构建崩溃。
  */
 
-// 检测是否在 EdgeOne / SCF 代理模式 — 如果是，跳过 mongodb 加载（该模块在 EdgeOne 不可用）
-const isProxyMode = !!process.env.MUSEUM_API_URL;
+import { MongoClient, Db, ObjectId } from "mongodb";
 
-// 本地开发需要 MONGODB_URI
-if (!isProxyMode && !process.env.MONGODB_URI) {
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
   throw new Error("请设置环境变量 MONGODB_URI");
 }
 
-// 在代理模式下导出空实现，避免 EdgeOne 构建时崩溃
-declare const require: any;
-const mongodb = isProxyMode ? null : require("mongodb");
-const { MongoClient, Db, ObjectId } = mongodb || {};
-
-const MONGODB_URI = isProxyMode ? "" : process.env.MONGODB_URI!;
 const DB_NAME = process.env.MONGO_DB_NAME || "museum";
 
 let cachedClient: MongoClient | null = null;
@@ -162,7 +152,6 @@ export const Checkins = {
   create: (doc: object) =>
     insertOne("checkins", { ...doc, createdAt: new Date().toISOString() }),
   update: (id: string, doc: object) => {
-    // id might be an ObjectId from MongoDB or a string
     let filter: object;
     try {
       filter = { _id: new ObjectId(id) };
@@ -198,5 +187,4 @@ export const Approvals = {
   },
 };
 
-// Export ObjectId for API routes that need it
 export { ObjectId };

@@ -83,11 +83,11 @@ export default function DashboardClient({
             </div>
           </Link>
 
-          <Link href="/change-password" className="block">
+          <Link href="/profile" className="block">
             <div className="bg-white rounded-2xl p-5 shadow-md text-center active:scale-95 transition-transform">
-              <span className="text-3xl">🔐</span>
-              <p className="mt-2 text-base font-semibold text-gray-700">修改密码</p>
-              <p className="text-xs text-gray-400 mt-1">保障账号安全</p>
+              <span className="text-3xl">👤</span>
+              <p className="mt-2 text-base font-semibold text-gray-700">个人中心</p>
+              <p className="text-xs text-gray-400 mt-1">信息与活动</p>
             </div>
           </Link>
         </div>
